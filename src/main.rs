@@ -20,7 +20,7 @@ fn index() -> Template {
 
 #[post("/", data = "<request>")]
 fn login<'r>(request: Form<LoginRequest<'r>>) -> &'r str {
-    request.password
+    "blabla"
 }
 
 #[launch]
