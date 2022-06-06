@@ -1,7 +1,7 @@
 #[macro_use] extern crate rocket;
 use rocket_dyn_templates::Template;
 use rocket::serde::{Serialize};
-use rocket::fs::{FileServer, relative};
+use rocket::fs::{FileServer};
 use rocket::form::Form;
 
 #[derive(Serialize)]
@@ -27,6 +27,6 @@ fn login<'r>(request: Form<LoginRequest<'r>>) -> &'r str {
 fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![index, login])
-        .mount("/public", FileServer::from(relative!("public")))
+        .mount("/public", FileServer::from("./public"))
         .attach(Template::fairing())
 }
