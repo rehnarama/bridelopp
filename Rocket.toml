@@ -1,6 +1,9 @@
 [default]
 template_dir = "./templates"
 
+[default.databases.jostrid]
+url = "mongodb://localhost:27017"
+
 [release]
 address = "0.0.0.0"
 

@@ -13,3 +13,6 @@ features = ["json", "msgpack", "uuid"]
 version =  "0.1.0-rc.2"
 features = ["tera", "handlebars"]
 
+[dependencies.rocket_db_pools]
+version = "0.1.0-rc.2"
+features = ["mongodb"]
