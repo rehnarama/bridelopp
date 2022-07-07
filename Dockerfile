@@ -17,7 +17,7 @@ COPY . .
 RUN cargo install --profile release --path .
 
 
-FROM debian:buster-slim AS runtime
+FROM debian:stable-slim AS runtime
 WORKDIR /usr/dist/bridelopp
 COPY --from=builder /usr/local/cargo/bin/bridelopp /usr/local/bin/bridelopp
 COPY --from=builder /usr/src/bridelopp/public /usr/dist/bridelopp/public
