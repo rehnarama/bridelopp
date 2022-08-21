@@ -1,0 +1,43 @@
+<style>
+    #small-logo-link {
+        color: var(--text-color);
+    }
+    #small-logo-link:hover {
+        text-decoration: none;
+    }
+
+    #small-logo {
+        font-size: 0.8rem;
+        display: grid;
+        grid-template:
+            "rings names"
+            "date date";
+        gap: var(--unit) calc(2 * var(--unit));
+        align-items: center;
+        align-content: center;
+        justify-items: center;
+    }
+
+    #small-logo>.rings {
+        grid-area: rings;
+    }
+
+    #small-logo>.header {
+        font-size: 1.5em;
+        grid-area: names;
+    }
+
+    #small-logo>.date {
+        grid-area: date;
+    }
+</style>
+
+
+<a href="/" id="small-logo-link">
+    <div id="small-logo">
+        <img class="rings" alt="icon of two wedding rings with a heart between them" src="/public/hero.svg"
+            height="40" />
+        <h1 class="header">Josefin & Astrid</h1>
+        <p class="date">5 augusti 2023</p>
+    </div>
+</a>

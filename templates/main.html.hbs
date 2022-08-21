@@ -1,20 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-  <meta charset="utf-8">
-  <title></title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
-  <link href="/public/style.css" rel="stylesheet" />
+{{>partials/head}}
 
-</head>
+<style>
+    #welcome-text {
+        margin-bottom: calc(8 * var(--unit));
+        text-align: center;
+    }
+
+    #welcome-text h2 {
+        font-size: 2rem;
+        font-weight: normal;
+    }
+
+    main {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: var(--unit);
+        align-items: center;
+    }
+
+    header {
+        justify-self: flex-start;
+    }
+
+    #content {
+        margin-top: auto;
+        margin-bottom: auto;
+        align-self: center;
+    }
+</style>
 
 <body>
-  <main>
-    Hejsan, {{invite.name}}
-  </main>
+    <main>
+        <header>
+            {{>partials/small_logo}}
+        </header>
+
+        <article id="content">
+
+            <div id="welcome-text">
+                <h2>
+                    Välkommen,
+                </h2>
+                <p>
+                    {{invite.name}}
+                </p>
+            </div>
+            <div id="menu-container">
+                {{>partials/menu}}
+            </div>
+
+        </article>
+    </main>
 </body>
 
 </html>

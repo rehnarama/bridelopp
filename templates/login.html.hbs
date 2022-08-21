@@ -1,15 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-  <meta charset="utf-8">
-  <title></title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
-  <link href="/public/style.css" rel="stylesheet" />
+{{>partials/head}}
 
-</head>
+<style>
+  #date {
+    font-size: 1.3rem;
+  }
+
+  #location {
+    font-size: 0.9rem;
+  }
+
+  main {
+    justify-content: center;
+    height: 100%;
+  }
+
+  main,
+  header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+</style>
+
 
 <body>
   <main>

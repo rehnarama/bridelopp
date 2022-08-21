@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{>partials/head}}
+
+<style>
+
+    main {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: var(--unit);
+        align-items: center;
+    }
+
+    #content {
+        margin-top: auto;
+        margin-bottom: auto;
+        align-self: center;
+    }
+
+</style>
+
+<body>
+    <main>
+        <header>
+            {{>partials/small_logo}}
+        </header>
+
+        <aside id="menu-container">
+            {{>partials/menu}}
+        </aside>
+
+        <article id="content">
+            <h1>Information</h1>
+        </article>
+    </main>
+</body>
+
+</html>

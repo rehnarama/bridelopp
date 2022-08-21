@@ -1,19 +1,25 @@
 * {
   box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 html,
 body {
   font-family: 'EB Garamond', serif;
-  padding: 0;
-  margin: 0;
 
   background-color: rgb(250, 250, 240);
 
   height: 100%;
 
+  font-size: 30px;
+
   --primary-color: #A6742A;
+  --link-color: #a74489;
+  --text-color: black;
   --unit: 8px;
+
+  color: var(--text-color);
 }
 
 h1,
@@ -26,22 +32,22 @@ h6 {
   margin-top: 0;
 }
 
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  font-size: 1.2rem;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
 h1 {
-  font-size: 4rem;
+  font-size: 2rem;
   font-style: italic;
   font-weight: normal;
 }
 
-main {
-  justify-content: center;
-  height: 100%;
-}
-
-main, header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
 
 header {
   gap: var(--unit);
@@ -50,14 +56,6 @@ header {
 
 header > * {
   margin: 0;
-}
-
-#date {
-  font-size: 3rem;
-}
-
-#location {
-  font-size: 1.5rem;
 }
 
 input {
