@@ -1,6 +1,11 @@
 [default]
 template_dir = "./templates"
 
+[default.azure]
+secret = ""
+client_id = "c3b5760b-928a-42db-89d4-620a48dcd9e8"
+redirect_uri = "http://localhost:8000/oauth/azure/callback"
+
 [default.databases.jostrid]
 url = "mongodb://localhost:27017"
 

@@ -1,0 +1,11 @@
+{{>partials/head}}
+
+<a href="https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?
+client_id={{azure.client_id}}
+&response_type=code
+&redirect_uri={{azure.redirect_uri}}
+&response_mode=query
+&scope={{azure.scopes}}
+&state={{azure.state}}
+&code_challenge={{azure.challenge}}
+&code_challenge_method=S256">Login</a>
