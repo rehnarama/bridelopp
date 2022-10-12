@@ -2,13 +2,15 @@ mod pkce;
 
 #[macro_use]
 extern crate rocket;
+extern crate dotenv;
+
+use dotenv::dotenv;
 use rocket::fairing::AdHoc;
 use rocket::form::Form;
-use rocket::fs::{FileServer, NamedFile};
-use rocket::http::{impl_from_uri_param_identity, Cookie, CookieJar, Status};
-use rocket::log::private::error;
-use rocket::response::Redirect;
-use rocket::serde::json::Json;
+use rocket::fs::NamedFile;
+use rocket::http::{Cookie, CookieJar, Status};
+use rocket::log::private::{error, info};
+use rocket::response::{status, Redirect};
 use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 use rocket_dyn_templates::Template;
@@ -18,13 +20,13 @@ use std::path::{Path, PathBuf};
 use rocket_db_pools::mongodb::{bson::doc, Client};
 use rocket_db_pools::{Connection, Database};
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(crate = "rocket::serde")]
 struct AppConfig {
     azure: AzureConfig,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 struct AzureConfig {
     secret: String,
@@ -155,8 +157,6 @@ async fn oauth_callback(
 
     let verifier = cookies.get("code_verifier").unwrap_or(&default_cookie);
     let stored_state = cookies.get("state").unwrap_or(&default_cookie);
-    dbg!(verifier);
-    dbg!(stored_state);
     assert_eq!(state, stored_state.value());
 
     let url = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token".to_string();
@@ -171,6 +171,7 @@ async fn oauth_callback(
         ("client_secret", config.azure.secret.to_owned()),
     ];
     let client = reqwest::Client::new();
+
     let resp = match client.post(url).form(&params).send().await {
         Ok(response) => match response.json::<OauthTokenResponse>().await {
             Ok(body) => Ok(body),
@@ -229,6 +230,13 @@ async fn get_user(bearer: String) -> Result<MeResponse, Status> {
     }
 }
 
+#[post("/incoming-email", rank = 2, data = "<body>")]
+fn incoming_email(body: String) -> &'static str {
+    info!("Got incoming email: {}", body);
+
+    "OK"
+}
+
 #[get("/<path..>", rank = 3)]
 async fn index<'r>(
     path: PathBuf,
@@ -283,7 +291,7 @@ async fn login<'r>(
             Ok(invite)
         }
         None => {
-            println!("Didn't find invite with password {}", password.clone());
+            error!("Didn't find invite with password {}", password.clone());
             Err(Status::NotFound)
         }
     }?;
@@ -303,9 +311,11 @@ async fn get_invite(client: Connection<Db>, password: String) -> Result<Option<I
 
 #[launch]
 fn rocket() -> _ {
+    dotenv().ok();
+
     rocket::build()
         .attach(Db::init())
-        .mount("/", routes![public, index, admin, login, oauth_callback])
+        .mount("/", routes![public, index, admin, login, oauth_callback, incoming_email])
         .attach(Template::fairing())
         .attach(AdHoc::config::<AppConfig>())
 }
