@@ -8,6 +8,7 @@ mod template_controller;
 mod admin_controller;
 mod azure_oauth_controller;
 mod email_controller;
+mod admin_invite_controller;
 
 pub fn mount(mut builder: Rocket<Build>) -> Rocket<Build> {
     let public_controller = public_controller::PublicController {};
