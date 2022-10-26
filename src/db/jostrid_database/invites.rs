@@ -19,7 +19,7 @@ pub struct Invite {
 }
 
 fn get_collection(
-    client: Connection<JostridDatabase>,
+    client: &Connection<JostridDatabase>,
 ) -> rocket_db_pools::mongodb::Collection<Invite> {
     client
         .deref()
@@ -28,7 +28,7 @@ fn get_collection(
 }
 
 pub async fn get_invite(
-    client: Connection<JostridDatabase>,
+    client: &Connection<JostridDatabase>,
     password: String,
 ) -> Result<Option<Invite>, Status> {
     get_collection(client)
@@ -41,7 +41,7 @@ pub async fn get_invite(
 }
 
 pub async fn get_invite_by_id(
-    client: Connection<JostridDatabase>,
+    client: &Connection<JostridDatabase>,
     id: Bson,
 ) -> Result<Option<Invite>, Status> {
     get_collection(client)
@@ -53,7 +53,7 @@ pub async fn get_invite_by_id(
         })
 }
 
-pub async fn add_invite(client: Connection<JostridDatabase>, invite: Invite) -> Result<(), Status> {
+pub async fn add_invite(client: &Connection<JostridDatabase>, invite: Invite) -> Result<(), Status> {
     get_collection(client)
         .insert_one(invite, None)
         .await

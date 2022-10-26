@@ -33,6 +33,11 @@
 
         <article id="content">
             <h1>Registration</h1>
+        
+            {{#each responses}}
+            {{else}}
+                <p>Du har inte OSA:t ännu. OSA nu!</p>
+            {{/each}}
         </article>
     </main>
 </body>

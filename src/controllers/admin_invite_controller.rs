@@ -29,7 +29,7 @@ async fn create_invite(
             azure_oauth::get_user(bearer.value().to_owned()).await?;
 
             add_invite(
-                client,
+                &client,
                 Invite {
                     name: invite.name.to_string(),
                     password: invite.password.to_string(),

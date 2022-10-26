@@ -1,19 +1,18 @@
-
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 use rocket::form::Form;
+use rocket::futures::FutureExt;
 use rocket::http::{Cookie, CookieJar, Status};
 use rocket::response::Redirect;
-use rocket::{
-    serde::{Serialize},
-    Route,
-};
+use rocket::tokio::{join, try_join};
+use rocket::{serde::Serialize, Route};
 use rocket_db_pools::mongodb::bson::doc;
-use rocket_db_pools::{Connection};
+use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 
 use crate::db::jostrid_database::invites::Invite;
-use crate::db::jostrid_database::{invites, JostridDatabase};
+use crate::db::jostrid_database::responses::Response;
+use crate::db::jostrid_database::{invites, responses, JostridDatabase};
 use crate::lib::Controller;
 
 #[derive(Debug, FromForm)]
@@ -29,7 +28,7 @@ async fn login<'r>(
 ) -> Result<Redirect, Status> {
     let password = request.password.to_string();
 
-    match invites::get_invite(client, password.clone()).await? {
+    match invites::get_invite(&client, password.clone()).await? {
         Some(invite) => {
             cookies.add(Cookie::new("password", password));
 
@@ -52,6 +51,7 @@ struct LoginContext;
 #[serde(crate = "rocket::serde")]
 struct MainContext {
     invite: Invite,
+    responses: Vec<Response>,
     route: String,
 }
 
@@ -78,16 +78,22 @@ async fn get_template<'r>(
     };
 
     match cookies.get("password") {
-        Some(password) => match invites::get_invite(client, password.value().to_string()).await? {
-            Some(invite) => Ok(Template::render(
-                resolved.clone(),
-                MainContext {
-                    invite,
-                    route: resolved.clone(),
-                },
-            )),
-            None => Err(Status::InternalServerError),
-        },
+        Some(password) => {
+            let invites_fut = invites::get_invite(&client, password.value().to_string());
+            let responses_fut = responses::get_responses(&client, password.value().to_string());
+
+            match try_join!(invites_fut, responses_fut) {
+                Ok((invite, responses)) => Ok(Template::render(
+                    resolved.clone(),
+                    MainContext {
+                        invite: invite.ok_or(Status::NotFound)?,
+                        responses,
+                        route: resolved.clone(),
+                    },
+                )),
+                Err(e) => Err(Status::InternalServerError),
+            }
+        }
         None => Ok(Template::render("login", LoginContext)),
     }
 }
