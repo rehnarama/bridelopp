@@ -4,7 +4,6 @@
 {{>partials/head}}
 
 <style>
-
     main {
         display: flex;
         flex-direction: column;
@@ -19,6 +18,7 @@
         align-self: center;
     }
 
+
 </style>
 
 <body>
@@ -32,12 +32,30 @@
         </aside>
 
         <article id="content">
-            <h1>Registration</h1>
-        
-            {{#each responses}}
-            {{else}}
-                <p>Du har inte OSA:t ännu. OSA nu!</p>
-            {{/each}}
+            <h1>OSA</h1>
+            <form>
+                {{#each invite.responses}}
+                <h2>{{name}}</h2>
+
+                <input type="radio" name="attending" id="attending-yes" value="true"
+                    checked="{{#if attending}}true{{else}}false{{/if}}" />
+                <label for="attending-yes">Ja, jag kommer på bröllopet</label>
+                <br>
+
+                <input type="radio" name="attending" id="attending-no" value="false"
+                    checked="{{#if attending}}false{{else}}true" {{/if}} />
+                <label for="attending-no">Nej, jag kan tyvärr inte komma på bröllopet</label>
+                <br>
+
+                <label for="food-preferences">Har du någon matallergi eller matpreferens vi bör känna till?</label>
+                <br>
+                <input name="food-preferences" id="food-preferences" placeholder="t.ex. glutenintolerans" />
+                <br>
+
+                {{/each}}
+                <button type="submit">Skicka svar</button>
+            </form>
+
         </article>
     </main>
 </body>

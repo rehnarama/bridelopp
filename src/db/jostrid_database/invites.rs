@@ -5,7 +5,10 @@ use rocket::{
     serde::{Deserialize, Serialize},
 };
 use rocket_db_pools::{
-    mongodb::bson::{doc, Bson},
+    mongodb::{
+        bson::{doc, Bson},
+        options::UpdateModifications,
+    },
     Connection,
 };
 
@@ -13,9 +16,26 @@ use super::JostridDatabase;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
+pub struct Response {
+    pub name: String,
+    pub attending: bool
+}
+
+impl Into<Bson> for Response {
+    fn into(self) -> Bson {
+        Bson::Document(doc!{
+            "name": self.name,
+            "attending": self.attending
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct Invite {
     pub password: String,
     pub name: String,
+    pub responses: Vec<Response>,
 }
 
 fn get_collection(
@@ -53,9 +73,36 @@ pub async fn get_invite_by_id(
         })
 }
 
-pub async fn add_invite(client: &Connection<JostridDatabase>, invite: Invite) -> Result<(), Status> {
+pub async fn add_invite(
+    client: &Connection<JostridDatabase>,
+    invite: Invite,
+) -> Result<(), Status> {
     get_collection(client)
         .insert_one(invite, None)
+        .await
+        .map_err(|e| {
+            error!("Failed {}", e);
+            Status::InternalServerError
+        })?;
+
+    Ok(())
+}
+
+pub async fn add_responses(
+    client: &Connection<JostridDatabase>,
+    password: &str,
+    responses: Vec<Response>,
+) -> Result<(), Status> {
+    get_collection(client)
+        .update_one(
+            doc! { "password": password },
+            doc! {
+                "$set": {
+                    "responses": responses
+                }
+            },
+            None,
+        )
         .await
         .map_err(|e| {
             error!("Failed {}", e);

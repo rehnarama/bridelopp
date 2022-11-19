@@ -1,19 +1,16 @@
 use std::path::PathBuf;
 
 use rocket::form::Form;
-use rocket::futures::FutureExt;
 use rocket::http::{Cookie, CookieJar, Status};
 use rocket::response::Redirect;
-use rocket::tokio::{join, try_join};
 use rocket::{serde::Serialize, Route};
 use rocket_db_pools::mongodb::bson::doc;
 use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 
-use crate::db::jostrid_database::invites::Invite;
-use crate::db::jostrid_database::responses::Response;
-use crate::db::jostrid_database::{invites, responses, JostridDatabase};
-use crate::lib::Controller;
+use crate::db::jostrid_database::invites::{Invite};
+use crate::db::jostrid_database::{invites, JostridDatabase};
+use crate::lib::{Controller, authentication};
 
 #[derive(Debug, FromForm)]
 struct LoginRequest<'r> {
@@ -45,13 +42,12 @@ async fn login<'r>(
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
-struct LoginContext;
+pub struct LoginContext;
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 struct MainContext {
     invite: Invite,
-    responses: Vec<Response>,
     route: String,
 }
 
@@ -77,25 +73,16 @@ async fn get_template<'r>(
         return Err(Status::NotFound);
     };
 
-    match cookies.get("password") {
-        Some(password) => {
-            let invites_fut = invites::get_invite(&client, password.value().to_string());
-            let responses_fut = responses::get_responses(&client, password.value().to_string());
+    let password_cookie = cookies.get("password");
+    let invite = authentication::get_invite(&client, password_cookie).await?;
 
-            match try_join!(invites_fut, responses_fut) {
-                Ok((invite, responses)) => Ok(Template::render(
-                    resolved.clone(),
-                    MainContext {
-                        invite: invite.ok_or(Status::NotFound)?,
-                        responses,
-                        route: resolved.clone(),
-                    },
-                )),
-                Err(e) => Err(Status::InternalServerError),
-            }
-        }
-        None => Ok(Template::render("login", LoginContext)),
-    }
+    Ok(Template::render(
+        resolved.clone(),
+        MainContext {
+            invite: invite,
+            route: resolved.clone(),
+        },
+    ))
 }
 
 impl Controller for TemplateController {
