@@ -5,10 +5,7 @@ use rocket::{
     serde::{Deserialize, Serialize},
 };
 use rocket_db_pools::{
-    mongodb::{
-        bson::{doc, Bson},
-        options::UpdateModifications,
-    },
+    mongodb::bson::{doc, Bson},
     Connection,
 };
 
@@ -18,14 +15,16 @@ use super::JostridDatabase;
 #[serde(crate = "rocket::serde")]
 pub struct Response {
     pub name: String,
-    pub attending: bool
+    pub attending: bool,
+    pub food_preferences: Option<String>,
 }
 
 impl Into<Bson> for Response {
     fn into(self) -> Bson {
-        Bson::Document(doc!{
+        Bson::Document(doc! {
             "name": self.name,
-            "attending": self.attending
+            "attending": self.attending,
+            "food_preferences": self.food_preferences.unwrap_or("".to_string())
         })
     }
 }
@@ -36,6 +35,7 @@ pub struct Invite {
     pub password: String,
     pub name: String,
     pub responses: Vec<Response>,
+    pub plus_one: bool
 }
 
 fn get_collection(
@@ -92,13 +92,15 @@ pub async fn add_responses(
     client: &Connection<JostridDatabase>,
     password: &str,
     responses: Vec<Response>,
+    plus_one: bool
 ) -> Result<(), Status> {
     get_collection(client)
         .update_one(
             doc! { "password": password },
             doc! {
                 "$set": {
-                    "responses": responses
+                    "responses": responses,
+                    "plus_one": plus_one
                 }
             },
             None,

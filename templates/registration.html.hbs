@@ -17,8 +17,6 @@
         margin-bottom: auto;
         align-self: center;
     }
-
-
 </style>
 
 <body>
@@ -32,28 +30,46 @@
         </aside>
 
         <article id="content">
+            {{#if submitted}}
+            <p>
+                Tack för dina svar! Du kan uppdatera dina svar när du vill.
+            </p>
+            {{/if}}
+
             <h1>OSA</h1>
-            <form>
+            <form method="post" action="/registration">
                 {{#each invite.responses}}
                 <h2>{{name}}</h2>
 
-                <input type="radio" name="attending" id="attending-yes" value="true"
-                    checked="{{#if attending}}true{{else}}false{{/if}}" />
-                <label for="attending-yes">Ja, jag kommer på bröllopet</label>
+                <input name="responses[{{@index}}].name" style="display:none" value="{{name}}">
+
+                <input type="radio" name="responses[{{@index}}].attending" id="attending-yes-{{@index}}" value="true"
+                    {{#if attending}}checked{{else}}{{/if}} />
+                <label for="attending-yes-{{@index}}">Ja, jag kommer på bröllopet</label>
                 <br>
 
-                <input type="radio" name="attending" id="attending-no" value="false"
-                    checked="{{#if attending}}false{{else}}true" {{/if}} />
-                <label for="attending-no">Nej, jag kan tyvärr inte komma på bröllopet</label>
+                <input type="radio" name="responses[{{@index}}].attending" id="attending-no-{{@index}}" value="false"
+                    {{#if attending}}{{else}}checked{{/if}} />
+                <label for="attending-no-{{@index}}">Nej, jag kan tyvärr inte komma på bröllopet</label>
                 <br>
 
-                <label for="food-preferences">Har du någon matallergi eller matpreferens vi bör känna till?</label>
+                <label for="food-preferences-{{@index}}">Har du någon matallergi eller matpreferens vi bör känna
+                    till?</label>
                 <br>
-                <input name="food-preferences" id="food-preferences" placeholder="t.ex. glutenintolerans" />
+                <input name="responses[{{@index}}].food_preferences" value="{{food_preferences}}"
+                    id="food-preferences-{{@index}}" placeholder="t.ex. glutenintolerans" />
                 <br>
 
                 {{/each}}
+
+                <label for="plus-one">Om möjligt, vill jag ta med en gäst*</label>
+                <input type="checkbox" id="plus-one" name="plus_one" {{#if invite.plus_one}}checked{{/if}} />
+
+                <br>
+
                 <button type="submit">Skicka svar</button>
+
+                <p>* vi meddelar dig om det finns plats</p>
             </form>
 
         </article>

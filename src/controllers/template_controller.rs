@@ -8,9 +8,9 @@ use rocket_db_pools::mongodb::bson::doc;
 use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 
-use crate::db::jostrid_database::invites::{Invite};
+use crate::db::jostrid_database::invites::Invite;
 use crate::db::jostrid_database::{invites, JostridDatabase};
-use crate::lib::{Controller, authentication};
+use crate::lib::{authentication, Controller};
 
 #[derive(Debug, FromForm)]
 struct LoginRequest<'r> {
@@ -46,9 +46,10 @@ pub struct LoginContext;
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
-struct MainContext {
-    invite: Invite,
-    route: String,
+pub struct MainContext {
+    pub invite: Invite,
+    pub route: String,
+    pub submitted: bool,
 }
 
 pub struct TemplateController;
@@ -81,6 +82,7 @@ async fn get_template<'r>(
         MainContext {
             invite: invite,
             route: resolved.clone(),
+            submitted: false,
         },
     ))
 }

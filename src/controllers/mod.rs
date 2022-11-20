@@ -9,7 +9,7 @@ mod admin_controller;
 mod azure_oauth_controller;
 mod email_controller;
 mod admin_invite_controller;
-mod response_controller;
+mod registration_controller;
 
 pub fn mount(mut builder: Rocket<Build>) -> Rocket<Build> {
     let public_controller = public_controller::PublicController {};
@@ -17,14 +17,14 @@ pub fn mount(mut builder: Rocket<Build>) -> Rocket<Build> {
     let admin_controller = admin_controller::AdminController {};
     let azure_oauth_controller = azure_oauth_controller::AzureOauthController {};
     let email_controller = email_controller::IncomingEmailController {};
-    let response_controller = response_controller::ResponseController {};
+    let registration_controller = registration_controller::RegistrationController {};
 
     builder = public_controller.mount(builder);
     builder = template_controller.mount(builder);
     builder = admin_controller.mount(builder);
     builder = azure_oauth_controller.mount(builder);
     builder = email_controller.mount(builder);
-    builder = response_controller.mount(builder);
+    builder = registration_controller.mount(builder);
 
     builder
 }
