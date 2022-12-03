@@ -27,9 +27,14 @@
     }
 
     #content {
-        margin-top: auto;
         margin-bottom: auto;
         align-self: center;
+    }
+
+    #menu-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 </style>
 
@@ -46,10 +51,11 @@
                     Välkommen,
                 </h2>
                 <p>
-                    {{invite.name}}
+                    {{names}}
                 </p>
             </div>
             <div id="menu-container">
+                <h3>Gå till...</h3>
                 {{>partials/menu}}
             </div>
         </article>

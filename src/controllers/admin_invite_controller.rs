@@ -31,7 +31,6 @@ async fn create_invite(
             add_invite(
                 &client,
                 Invite {
-                    name: invite.name.to_string(),
                     password: invite.password.to_string(),
                     responses: vec![],
                     plus_one: false

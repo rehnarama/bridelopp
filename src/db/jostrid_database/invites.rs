@@ -33,7 +33,6 @@ impl Into<Bson> for Response {
 #[serde(crate = "rocket::serde")]
 pub struct Invite {
     pub password: String,
-    pub name: String,
     pub responses: Vec<Response>,
     pub plus_one: bool
 }

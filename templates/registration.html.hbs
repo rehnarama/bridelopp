@@ -17,6 +17,21 @@
         margin-bottom: auto;
         align-self: center;
     }
+
+    #submit-button {
+        margin-top: var(--unit);
+    }
+
+    .input-group {
+        display: flex;
+        gap: 0 calc(2 * var(--unit));
+        align-items: center;
+    }
+
+    .flex-vertical {
+        align-items: stretch;
+        flex-direction: column;
+    }
 </style>
 
 <body>
@@ -29,7 +44,7 @@
             {{>partials/menu}}
         </aside>
 
-        <article id="content">
+        <article id="content" class="container">
             {{#if submitted}}
             <p>
                 Tack för dina svar! Du kan uppdatera dina svar när du vill.
@@ -37,28 +52,47 @@
             {{/if}}
 
             <h1>OSA</h1>
+
+            <p>
+                Dags att OSA! Fyll i formuläret nedan och skicka sedan in dina svar. Du kan alltid ändra svaren i
+                framtiden, om det skulle behövas.
+            </p>
+
+            <p>Vi behöver dina svar senast den 31a mars.</p>
+
             <form method="post" action="/registration">
                 {{#each invite.responses}}
+                <hr>
+
                 <h2>{{name}}</h2>
 
                 <input name="responses[{{@index}}].name" style="display:none" value="{{name}}">
 
-                <input type="radio" name="responses[{{@index}}].attending" id="attending-yes-{{@index}}" value="true"
-                    {{#if attending}}checked{{else}}{{/if}} />
-                <label for="attending-yes-{{@index}}">Ja, jag kommer på bröllopet</label>
-                <br>
+                <div class="input-group">
+                    <input type="radio" name="responses[{{@index}}].attending" id="attending-yes-{{@index}}"
+                        value="true" {{#if attending}}checked{{else}}{{/if}} />
+                    <label for="attending-yes-{{@index}}">Ja, jag kommer på bröllopet</label>
+                </div>
 
-                <input type="radio" name="responses[{{@index}}].attending" id="attending-no-{{@index}}" value="false"
-                    {{#if attending}}{{else}}checked{{/if}} />
-                <label for="attending-no-{{@index}}">Nej, jag kan tyvärr inte komma på bröllopet</label>
-                <br>
+                <div class="input-group">
+                    <input type="radio" name="responses[{{@index}}].attending" id="attending-no-{{@index}}"
+                        value="false" {{#if attending}}{{else}}checked{{/if}} />
+                    <label for="attending-no-{{@index}}">Nej, jag kan tyvärr inte komma på bröllopet</label>
+                </div>
 
-                <label for="food-preferences-{{@index}}">Har du någon matallergi eller matpreferens vi bör känna
-                    till?</label>
-                <br>
-                <input name="responses[{{@index}}].food_preferences" value="{{food_preferences}}"
-                    id="food-preferences-{{@index}}" placeholder="t.ex. glutenintolerans" />
-                <br>
+                <div class="input-group flex-vertical">
+                    <label for="food-preferences-{{@index}}">Har du någon matallergi eller matpreferens vi bör känna
+                        till?</label>
+                    <br>
+
+                    <input name="responses[{{@index}}].food_preferences" value="{{food_preferences}}"
+                        id="food-preferences-{{@index}}" placeholder="t.ex. glutenintolerans" />
+                </div>
+
+
+                {{#if @last}}
+                <hr>
+                {{/if}}
 
                 {{/each}}
 
@@ -67,7 +101,7 @@
 
                 <br>
 
-                <button type="submit">Skicka svar</button>
+                <button id="submit-button" type="submit">Skicka svar</button>
 
                 <p>* vi meddelar dig om det finns plats</p>
             </form>

@@ -42,7 +42,7 @@ async fn create_response(
     body: Form<CreateResponsesRequest>,
     client: Connection<JostridDatabase>,
     cookies: &CookieJar<'_>,
-) -> Result<Template, Status> {
+) -> Result<Redirect, Status> {
     dbg!(&body);
 
     let password_cookie = cookies.get("password");
@@ -57,16 +57,7 @@ async fn create_response(
 
     add_responses(&client, &invite.password, responses, body.plus_one).await?;
 
-    let new_invite = get_invite(&client, password_cookie).await?;
-
-    Ok(Template::render(
-        "registration",
-        MainContext {
-            invite: new_invite,
-            route: "registration".to_string(),
-            submitted: true
-        },
-    ))
+    Ok(Redirect::to("/registration"))
 }
 
 impl Controller for RegistrationController {
