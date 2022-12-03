@@ -36,6 +36,7 @@ pub struct Invite {
     pub responses: Vec<Response>,
     pub plus_one: bool,
     pub submitted: bool,
+    pub greeting: String,
     pub first_login: Option<DateTime>,
     pub last_login: Option<DateTime>,
 }

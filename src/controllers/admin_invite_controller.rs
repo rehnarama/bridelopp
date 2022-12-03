@@ -36,7 +36,8 @@ async fn create_invite(
                     plus_one: false,
                     last_login: None,
                     first_login: None,
-                    submitted: false
+                    submitted: false,
+                    greeting: "".to_string()
                 },
             ).await?;
 

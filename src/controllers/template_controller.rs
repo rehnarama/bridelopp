@@ -48,7 +48,6 @@ pub struct LoginContext;
 #[serde(crate = "rocket::serde")]
 pub struct MainContext {
     pub invite: Invite,
-    pub names: String,
     pub route: String,
     pub submitted: bool,
 }
@@ -78,18 +77,10 @@ async fn get_template<'r>(
     let password_cookie = cookies.get("password");
     let invite = authentication::get_invite(&client, password_cookie).await?;
 
-    let names: String = invite
-        .responses
-        .iter()
-        .map(|response| response.name.as_str())
-        .collect::<Vec<&str>>()
-        .join(", ");
-
     Ok(Template::render(
         resolved.clone(),
         MainContext {
-            invite: invite,
-            names: names,
+            invite,
             route: resolved.clone(),
             submitted: false,
         },

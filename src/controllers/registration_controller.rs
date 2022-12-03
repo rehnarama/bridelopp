@@ -1,13 +1,13 @@
 use rocket::http::{CookieJar, Status};
-use rocket::response::Redirect;
+
 use rocket::Route;
 use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 
-use crate::db::jostrid_database::invites::{self, add_invite, add_responses, Invite};
+use crate::db::jostrid_database::invites::{self, add_responses};
 use crate::db::jostrid_database::JostridDatabase;
 use crate::lib::authentication::get_invite;
-use crate::lib::{azure_oauth, Controller};
+use crate::lib::{Controller};
 use rocket::form::Form;
 
 use super::template_controller::MainContext;
@@ -42,7 +42,7 @@ async fn create_response(
     body: Form<CreateResponsesRequest>,
     client: Connection<JostridDatabase>,
     cookies: &CookieJar<'_>,
-) -> Result<Redirect, Status> {
+) -> Result<Template, Status> {
     dbg!(&body);
 
     let password_cookie = cookies.get("password");
@@ -52,12 +52,22 @@ async fn create_response(
     let responses: Vec<invites::Response> = body
         .responses
         .iter()
-        .map(|r| invites::Response::from(r))
+        .map(invites::Response::from)
         .collect();
 
     add_responses(&client, &invite.password, responses, body.plus_one).await?;
 
-    Ok(Redirect::to("/registration"))
+    let new_invite = get_invite(&client, password_cookie).await?;
+
+
+    Ok(Template::render(
+        "registration",
+        MainContext {
+            invite: new_invite,
+            route: "registration".to_string(),
+            submitted: true
+        },
+    ))
 }
 
 impl Controller for RegistrationController {
