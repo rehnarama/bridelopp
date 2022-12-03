@@ -5,7 +5,7 @@ use rocket::{
     serde::{Deserialize, Serialize},
 };
 use rocket_db_pools::{
-    mongodb::bson::{doc, Bson},
+    mongodb::bson::{doc, Bson, DateTime},
     Connection,
 };
 
@@ -34,7 +34,10 @@ impl Into<Bson> for Response {
 pub struct Invite {
     pub password: String,
     pub responses: Vec<Response>,
-    pub plus_one: bool
+    pub plus_one: bool,
+    pub submitted: bool,
+    pub first_login: Option<DateTime>,
+    pub last_login: Option<DateTime>,
 }
 
 fn get_collection(
@@ -91,7 +94,7 @@ pub async fn add_responses(
     client: &Connection<JostridDatabase>,
     password: &str,
     responses: Vec<Response>,
-    plus_one: bool
+    plus_one: bool,
 ) -> Result<(), Status> {
     get_collection(client)
         .update_one(
@@ -99,7 +102,43 @@ pub async fn add_responses(
             doc! {
                 "$set": {
                     "responses": responses,
-                    "plus_one": plus_one
+                    "plus_one": plus_one,
+                    "submitted": true
+                }
+            },
+            None,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed {}", e);
+            Status::InternalServerError
+        })?;
+
+    Ok(())
+}
+
+pub async fn on_login(client: &Connection<JostridDatabase>, password: &str) -> Result<(), Status> {
+    get_collection(client)
+        .update_one(
+            doc! { "password": password, "first_login": {"$exists": false} },
+            doc! {
+                "$set": {
+                    "first_login": DateTime::now()
+                }
+            },
+            None,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed {}", e);
+            Status::InternalServerError
+        })?;
+    get_collection(client)
+        .update_one(
+            doc! { "password": password},
+            doc! {
+                "$set": {
+                    "last_login": DateTime::now()
                 }
             },
             None,

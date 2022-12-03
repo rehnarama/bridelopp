@@ -33,7 +33,10 @@ async fn create_invite(
                 Invite {
                     password: invite.password.to_string(),
                     responses: vec![],
-                    plus_one: false
+                    plus_one: false,
+                    last_login: None,
+                    first_login: None,
+                    submitted: false
                 },
             ).await?;
 
