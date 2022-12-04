@@ -18,7 +18,7 @@
 </style>
 
 <form id="login-form" method="post" action="/login">
-    <input id="pasword" placeholder="Lösenord" name="password" />
+    <input type="text" pattern="[0-9]*" inputmode="numeric" placeholder="Lösenord" name="password" />
 
     <button type="submit">Logga in</button>
 </form>
