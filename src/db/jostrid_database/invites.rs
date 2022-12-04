@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use rocket::{
     http::Status,
-    serde::{Deserialize, Serialize},
+    serde::{Deserialize, Serialize}, futures::{StreamExt, TryStreamExt},
 };
 use rocket_db_pools::{
     mongodb::bson::{doc, Bson, DateTime},
@@ -11,7 +11,7 @@ use rocket_db_pools::{
 
 use super::JostridDatabase;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct Response {
     pub name: String,
@@ -56,6 +56,24 @@ pub async fn get_invite(
 ) -> Result<Option<Invite>, Status> {
     get_collection(client)
         .find_one(doc! { "password": password }, None)
+        .await
+        .map_err(|e| {
+            error!("Failed {}", e);
+            Status::InternalServerError
+        })
+}
+
+pub async fn get_invites(
+    client: &Connection<JostridDatabase>
+) -> Result<Vec<Invite>, Status> {
+    get_collection(client)
+        .find(None, None)
+        .await
+        .map_err(|e| {
+            error!("Failed {}", e);
+            Status::InternalServerError
+        })?
+        .try_collect()
         .await
         .map_err(|e| {
             error!("Failed {}", e);

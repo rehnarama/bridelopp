@@ -1,8 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
 {{>partials/head}}
 
-<p>
-    {{name}}
-</p>
-<p>
-    {{email}}
-</p>
+<style>
+    main {
+        padding: calc(2 * var(--unit));
+    }
+
+    table {
+        font-size: 0.8rem;
+    }
+
+    td, th {
+        padding: var(--unit);
+    }
+</style>
+
+<body>
+    <main>
+
+
+        <h1>Admin-sidan!</h1>
+
+        <p>
+            Välkommen, {{name}} ({{email}})
+        </p>
+
+        <article>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>
+                            Inbjudan
+                        </th>
+                        <th>
+                            Lösenord
+                        </th>
+                        <th>
+                            Loggade in första gången
+                        </th>
+                        <th>
+                            Loggade in senast
+                        </th>
+                        <th>
+                            Har OSA:t?
+                        </th>
+                        <th>
+                            Vill ha +1
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {{#each invites}}
+                    <tr>
+                        <td> {{greeting}} </td>
+                        <td>{{password}} </td>
+                        <td>{{#if first_login}}{{first_login}}{{/if}}</td>
+                        <td>{{#if last_login}}{{last_login}}{{/if}}</td>
+                        <td>{{#if submitted}}Ja{{/if}}</td>
+                        <td>{{#if submitted}}{{plus_one}}{{/if}}</td>
+
+                    </tr>
+                    {{/each}}
+                </tbody>
+
+            </table>
+        </article>
+    </main>
+</body>
+
+</html>

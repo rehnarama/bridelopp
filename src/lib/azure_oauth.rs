@@ -21,7 +21,7 @@ pub async fn get_user(bearer: String) -> Result<MeResponse, Status> {
         },
         Err(e) => {
             error!("Error: {}", e);
-            Err(Status::InternalServerError)
+            Err(Status::Unauthorized)
         }
     }?;
 
