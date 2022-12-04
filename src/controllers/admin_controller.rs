@@ -53,6 +53,10 @@ struct AdminContext {
     name: String,
     email: String,
     invites: Vec<Invite>,
+    n_attending: usize,
+    n_not_attending: usize,
+    n_no_response: usize,
+    n_total: usize,
 }
 
 #[derive(Serialize)]
@@ -93,11 +97,30 @@ async fn render_admin(
     user: &MeResponse,
     bearer: String,
 ) -> Result<Template, Status> {
-    let invites = invites::get_invites(client)
+    let invites: Vec<Invite> = invites::get_invites(client)
         .await?
         .iter()
         .map(|i| i.into())
         .collect();
+
+    let all_responses: Vec<&Response> = invites.iter().flat_map(|i| &i.responses).collect();
+    let all_submitted_responses: Vec<&Response> = invites
+        .iter()
+        .filter(|i| i.submitted)
+        .flat_map(|i| &i.responses)
+        .collect();
+    let n_total = all_responses.iter().count();
+    let n_attending = all_submitted_responses
+        .iter()
+        .filter(|r| r.attending)
+        .map(|_| 1)
+        .sum();
+    let n_not_attending = all_submitted_responses
+        .iter()
+        .filter(|r| !r.attending)
+        .map(|_| 1)
+        .sum();;
+    let n_no_response = n_total - (n_attending + n_not_attending);
 
     Ok(Template::render(
         "admin",
@@ -106,6 +129,10 @@ async fn render_admin(
             name: user.display_name.clone(),
             email: user.user_principal_name.clone(),
             invites,
+            n_attending,
+            n_not_attending,
+            n_no_response,
+            n_total,
         },
     ))
 }

@@ -12,22 +12,27 @@
         font-size: 0.8rem;
     }
 
-    td, th {
+    td,
+    th {
         padding: var(--unit);
     }
 </style>
 
 <body>
     <main>
+        <article>
 
+            <h1>Admin-sidan!</h1>
 
-        <h1>Admin-sidan!</h1>
-
-        <p>
-            Välkommen, {{name}} ({{email}})
-        </p>
+            <p>
+                Välkommen, {{name}} ({{email}})
+            </p>
+        </article>
 
         <article>
+            <h2>
+                Inbjudningar
+            </h2>
             <table border="1">
                 <thead>
                     <tr>
@@ -63,6 +68,48 @@
                         <td>{{#if submitted}}{{plus_one}}{{/if}}</td>
 
                     </tr>
+                    {{/each}}
+                </tbody>
+
+            </table>
+        </article>
+
+        <article>
+            <h2>
+                Svar
+            </h2>
+            <ul>
+               <li>Antal som tackat ja: {{n_attending}}</li>
+               <li>Antal som tackat nej: {{n_not_attending}}</li>
+               <li>Antal som inte svarat: {{n_no_response}}</li>
+               <li>Antal inbjudna: {{n_total}}</li>
+            </ul>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>
+                            Namn
+                        </th>
+                        <th>
+                            Kommer
+                        </th>
+                        <th>
+                            Matpreferens
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {{#each invites}}
+                    {{#if submitted}}
+                    {{#each responses}}
+                    <tr>
+                        <td>{{name}}</td>
+                        <td>{{attending}}</td>
+                        <td>{{food_preferences}}</td>
+                    </tr>
+                    {{/each}}
+                    {{/if}}
                     {{/each}}
                 </tbody>
 
