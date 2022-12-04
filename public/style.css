@@ -22,6 +22,12 @@ body {
   color: var(--text-color);
 }
 
+@media screen and (max-width:801px)  {
+  html, body {
+    font-size: 20px;
+  }
+}
+
 p, hr, label {
   margin-top: calc(var(--unit));
   margin-bottom: calc(var(--unit));
@@ -40,7 +46,7 @@ h6 {
 a {
   color: var(--link-color);
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 a:hover {
@@ -48,11 +54,14 @@ a:hover {
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-style: italic;
   font-weight: normal;
 }
 
+h2 {
+  font-size: 1.2rem;
+}
 
 header {
   gap: var(--unit);
