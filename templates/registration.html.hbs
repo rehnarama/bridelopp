@@ -32,6 +32,13 @@
         align-items: stretch;
         flex-direction: column;
     }
+
+    #submitted {
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        padding: var(--unit);
+        text-align: center;
+        margin-bottom: calc(3 * var(--unit));
+    }
 </style>
 
 <body>
@@ -46,7 +53,7 @@
 
         <article id="content" class="container">
             {{#if submitted}}
-            <p>
+            <p id="submitted">
                 Tack för dina svar! Du kan uppdatera dina svar när du vill.
             </p>
             {{/if}}
