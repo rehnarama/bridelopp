@@ -17,8 +17,7 @@ COPY . .
 RUN cargo install --profile release --path .
 
 
-FROM debian:stable-slim AS runtime
-RUN update-ca-certificates --fresh
+FROM debian:stable AS runtime
 
 WORKDIR /usr/dist/bridelopp
 COPY --from=builder /usr/local/cargo/bin/bridelopp /usr/local/bin/bridelopp
