@@ -24,6 +24,7 @@ struct Invite {
     greeting: String,
     first_login: Option<String>,
     last_login: Option<String>,
+    address: String,
 }
 
 impl From<&invites::Invite> for Invite {
@@ -42,6 +43,7 @@ impl From<&invites::Invite> for Invite {
                 date.try_to_rfc3339_string()
                     .unwrap_or("Error converting date to string".to_string())
             }),
+            address: invite.address.clone(),
         }
     }
 }

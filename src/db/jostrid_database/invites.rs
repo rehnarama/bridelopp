@@ -1,8 +1,9 @@
 use std::ops::Deref;
 
 use rocket::{
+    futures::{StreamExt, TryStreamExt},
     http::Status,
-    serde::{Deserialize, Serialize}, futures::{StreamExt, TryStreamExt},
+    serde::{Deserialize, Serialize},
 };
 use rocket_db_pools::{
     mongodb::bson::{doc, Bson, DateTime},
@@ -39,6 +40,7 @@ pub struct Invite {
     pub greeting: String,
     pub first_login: Option<DateTime>,
     pub last_login: Option<DateTime>,
+    pub address: String,
 }
 
 fn get_collection(
@@ -63,9 +65,7 @@ pub async fn get_invite(
         })
 }
 
-pub async fn get_invites(
-    client: &Connection<JostridDatabase>
-) -> Result<Vec<Invite>, Status> {
+pub async fn get_invites(client: &Connection<JostridDatabase>) -> Result<Vec<Invite>, Status> {
     get_collection(client)
         .find(None, None)
         .await

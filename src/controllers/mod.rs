@@ -8,7 +8,6 @@ pub mod template_controller;
 mod admin_controller;
 mod azure_oauth_controller;
 mod email_controller;
-mod admin_invite_controller;
 mod registration_controller;
 
 pub fn mount(mut builder: Rocket<Build>) -> Rocket<Build> {
