@@ -39,6 +39,10 @@
       <p id="location">Skälby gård, Järfälla</p>
     </header>
 
+    {{#if error}}
+      {{reason}}
+    {{/if}}
+
     {{>partials/login_form}}
   </main>
 </body>

@@ -22,27 +22,43 @@ async fn login<'r>(
     request: Form<LoginRequest<'r>>,
     client: Connection<JostridDatabase>,
     cookies: &CookieJar<'_>,
-) -> Result<Redirect, Status> {
+) -> Result<Template, Status> {
     let password = request.password.to_string();
 
-    match invites::get_invite(&client, password.clone()).await? {
+    let result = match invites::get_invite(&client, password.clone()).await? {
         Some(invite) => {
             cookies.add(Cookie::new("password", password));
 
-            Ok(invite)
+            Ok(Template::render(
+                "main",
+                MainContext {
+                    invite,
+                    route: "main".to_string(),
+                    submitted: false,
+                },
+            ))
         }
         None => {
             error!("Didn't find invite with password {}", password.clone());
-            Err(Status::NotFound)
+            Ok(Template::render(
+                "login",
+                LoginContext {
+                    error: true,
+                    reason: "Felaktig PIN-kod".to_string(),
+                },
+            ))
         }
     }?;
 
-    Ok(Redirect::to("/"))
+    Ok(result)
 }
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
-pub struct LoginContext;
+pub struct LoginContext {
+    pub error: bool,
+    pub reason: String,
+}
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]

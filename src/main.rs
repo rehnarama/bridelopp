@@ -13,7 +13,6 @@ use db::jostrid_database::JostridDatabase;
 use dotenv::dotenv;
 use rocket::fairing::AdHoc;
 
-
 use rocket_dyn_templates::Template;
 
 use rocket_db_pools::Database;
@@ -22,7 +21,13 @@ use crate::config::AppConfig;
 
 #[catch(401)]
 fn unauthorized() -> Template {
-   Template::render("login", LoginContext) 
+    Template::render(
+        "login",
+        LoginContext {
+            error: false,
+            reason: "".to_string(),
+        },
+    )
 }
 
 #[launch]
