@@ -22,6 +22,12 @@ body {
   color: var(--text-color);
 }
 
+button {
+  color: var(--text-color);
+  font-weight: 400;
+}
+
+
 @media screen and (max-width:801px)  {
   html, body {
     font-size: 20px;
