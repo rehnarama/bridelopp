@@ -3,6 +3,7 @@ mod controllers;
 mod db;
 mod lib;
 mod pkce;
+mod error;
 
 #[macro_use]
 extern crate rocket;

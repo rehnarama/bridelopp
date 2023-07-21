@@ -19,7 +19,7 @@ async fn public(file: PathBuf) -> Option<StaticFileResponder> {
         .ok()
         .map(|named_file| StaticFileResponder {
             inner: named_file,
-            header: Header::new("Cache-Control", "max-age=3600"),
+            header: Header::new("Cache-Control", "max-age=0"),
         })
 }
 

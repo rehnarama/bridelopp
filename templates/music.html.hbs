@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{>partials/head}}
+
+<style>
+    main {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: var(--unit);
+        align-items: center;
+    }
+
+    header {
+        justify-self: flex-start;
+    }
+
+    #content {
+        justify-self: center;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: calc(4 * var(--unit));
+        width: 100%;
+        padding-left: var(--unit);
+        padding-right: var(--unit);
+
+        --track-height: 70px;
+    }
+
+
+    @media screen and (max-width:801px) {
+        #content {
+            --track-height: 50px;
+        }
+    }
+
+    #search-form {
+        align-self: center;
+    }
+
+    #search-form>*:not(:last-child) {
+        margin-right: var(--unit);
+    }
+
+    #menu-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .vote-container {
+        display: flex;
+        gap: calc(2 * var(--unit));
+        align-items: center;
+    }
+
+    .votes-text {
+        text-align: center;
+        line-height: 0.8;
+        width: var(--track-height);
+    }
+
+    .votes-inner-text {
+        font-size: 0.6em;
+    }
+
+    .track-container {
+        flex: 1;
+
+        display: grid;
+        grid-template-areas:
+            "art title vote"
+            "art artist vote";
+        grid-template-columns: var(--track-height) 1fr auto;
+        height: var(--track-height);
+        width: 100%;
+        margin-bottom: var(--unit);
+        gap: var(--unit);
+    }
+
+    .track-title {
+        grid-area: title;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        margin: 0;
+    }
+
+    .track-artist {
+        grid-area: artist;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        font-size: 0.75em;
+        margin: 0;
+    }
+
+    .track-album-art {
+        grid-area: art;
+        width: var(--track-height);
+        height: var(--track-height);
+    }
+
+    .track-vote {
+        grid-area: vote;
+        align-self: center;
+    }
+
+    #next-vote-in {
+        color: black;
+        font-size: 0.7em;
+        float: right;
+    }
+</style>
+
+
+<body>
+    <main>
+        <header>
+            {{>partials/small_logo}}
+        </header>
+
+        <article id="content">
+            <h2>Låtar i kö&nbsp;<span id="next-vote-in"></span></h2>
+            <section id="queue">
+            </section>
+
+            <h2>Köa nya låtar</h2>
+            <form id="search-form">
+                <label for="search">Sök:</label>
+                <input id="search" type="text">
+            </form>
+
+            <section id="search-results">
+            </section>
+
+        </article>
+    </main>
+</body>
+
+<script>
+    const relativeTimeFormat = new Intl.RelativeTimeFormat("sv-SE");
+    const searchUrl = "/api/search";
+    const voteUrl = "/vote";
+    const lastVoteKey = "last-vote";
+
+    const votes = new Map();
+    const voteEveryMs = 30 * 60 * 1000;
+
+    let timeoutHandle = -1;
+    function handleOnChange(e) {
+        if (timeoutHandle !== -1) {
+            clearTimeout(timeoutHandle);
+        }
+
+        const query = e.currentTarget.value;
+        if (query.length < 3) { return; }
+
+        timeoutHandle = setTimeout(() => {
+            searchForTrack(query);
+        }, 300);
+    }
+
+    async function refresh_votes() {
+        const response = await (await fetch(voteUrl)).json();
+
+        votes.clear();
+        for (const vote of response) {
+            votes.set(vote.uri, vote);
+        }
+
+        const queue = document.getElementById("queue");
+        queue.innerHTML = "";
+
+        response.sort((a, b) => b.votes - a.votes)
+            .map((track) => buildTrackItem(track, true))
+            .forEach(element => queue.appendChild(element));
+    }
+
+    function getNextVoteIn() {
+        const lastVote = new Date(localStorage.getItem(lastVoteKey) ?? new Date(0).toISOString());
+        const timeSinceLastVote = new Date().getTime() - lastVote.getTime();
+        return voteEveryMs - timeSinceLastVote;
+    }
+
+    function canVote() {
+        const nextVoteIn = getNextVoteIn();
+        return nextVoteIn < 0;
+    }
+
+    async function vote(track) {
+        await fetch(voteUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                uri: track.uri,
+                name: track.name,
+                artist: track.artist,
+                image: track.image
+            })
+        });
+        await refresh_votes();
+        updateNextVoteIn();
+    }
+
+    function buildTrackItem(track, showVotes = false) {
+        const container = document.createElement("div");
+        const albumArt = document.createElement("img");
+        const title = document.createElement("p");
+        const artist = document.createElement("p");
+        const voteButton = document.createElement("button");
+
+        title.innerHTML = track.name;
+        title.className = "track-title";
+        artist.innerHTML = track.artist;
+        artist.className = "track-artist";
+        voteButton.innerHTML = "Rösta";
+        voteButton.className = "track-vote";
+
+        albumArt.src = track.image;
+        albumArt.className = "track-album-art";
+
+        container.className = "track-container";
+        container.appendChild(albumArt);
+        container.appendChild(title);
+        container.appendChild(artist);
+        container.appendChild(voteButton);
+
+        voteButton.addEventListener("click", async () => {
+            if (!canVote()) {
+                const nextVoteInStr = relativeTimeFormat.format(Math.round((getNextVoteIn()) / 1000 / 60), "minute");
+                alert(`Du kan bara rösta en gång var 30e minut. Nästa röst ${nextVoteInStr}`);
+                return;
+            }
+
+            voteButton.disabled = true;
+            voteButton.innerHTML = "✅";
+            await vote(track);
+
+            localStorage.setItem(lastVoteKey, new Date().toISOString())
+        });
+
+        if (showVotes) {
+            const voteContainer = document.createElement("div");
+            voteContainer.className = "vote-container";
+
+            const votesP = document.createElement("p");
+            const votedTrack = votes.get(track.uri) ?? { votes: 0 };
+            const votesPlural = votedTrack.votes === 1 ? "Röst" : "Röster";
+            votesP.innerHTML = `${votedTrack.votes}<br><span class="votes-inner-text">${votesPlural}</span>`;
+            votesP.className = "votes-text";
+
+            voteContainer.appendChild(votesP);
+            voteContainer.appendChild(container);
+
+            return voteContainer;
+        } else {
+            return container;
+        }
+    }
+
+    async function searchForTrack(query) {
+        const response = await fetch(searchUrl + "?" + new URLSearchParams({
+            query
+        }));
+        const data = await response.json();
+
+        const titles = data.tracks.items.map(track => buildTrackItem({
+            uri: track.uri,
+            name: track.name,
+            artist: track.artists.map(artist => artist.name).join(", "),
+            image: track.album.images[0].url,
+        }));
+
+        const searchResults = document.getElementById("search-results");
+
+        searchResults.innerHTML = "";
+        searchResults.append(...titles);
+    }
+
+    const nextVoteInElement = document.getElementById("next-vote-in");
+    function updateNextVoteIn() {
+        if (canVote()) {
+            nextVoteInElement.innerText = "Du har 1 röst."
+        } else {
+            const lastVote = new Date(localStorage.getItem(lastVoteKey) ?? new Date(0).toISOString());
+            const timeSinceLastVote = new Date().getTime() - lastVote.getTime();
+            const nextVoteIn = voteEveryMs - timeSinceLastVote;
+            const minutes = Math.floor(nextVoteIn / 1000 / 60).toString().padStart(2, "0");
+            const seconds = Math.floor(nextVoteIn / 1000 - minutes * 60).toString().padStart(2, "0");
+            nextVoteInElement.innerText = `Nästa röst om ${minutes}:${seconds}`;
+        }
+    }
+
+    function setup() {
+        document.getElementById("search").addEventListener("input", handleOnChange);
+        refresh_votes();
+        updateNextVoteIn();
+        setInterval(updateNextVoteIn, 1000);
+    }
+
+    setup();
+</script>
+
+</html>

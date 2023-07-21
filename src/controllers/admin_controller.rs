@@ -11,6 +11,7 @@ use crate::db::jostrid_database::JostridDatabase;
 use crate::lib::azure_oauth::{self, MeResponse};
 use crate::lib::Controller;
 use crate::pkce;
+use crate::db::jostrid_database::spotify::{QueueItem, SpotifyUser, SpotifyDb};
 
 pub struct AdminController;
 
@@ -99,6 +100,9 @@ async fn render_admin(
     user: &MeResponse,
     bearer: String,
 ) -> Result<Template, Status> {
+    let spotify = client.get_user().await;
+    dbg!(spotify);
+
     let invites: Vec<Invite> = invites::get_invites(client)
         .await?
         .iter()

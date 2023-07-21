@@ -1,14 +1,19 @@
 [default]
 template_dir = "./templates"
+log_level = "normal"
 
 [default.azure]
 secret = ""
 client_id = "c3b5760b-928a-42db-89d4-620a48dcd9e8"
 redirect_uri = "http://localhost:8000/oauth/azure/callback"
 
+[default.spotify]
+secret = ""
+client_id = "6d8316f67a4b4f1b9b29f870442c3f01"
+redirect_uri = "http://localhost:8000/oauth/spotify/callback"
+
 [default.databases.jostrid]
 url = "mongodb://localhost:27017"
 
 [release]
 address = "0.0.0.0"
-log_level = "normal"
