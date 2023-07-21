@@ -17,7 +17,7 @@ COPY . .
 RUN cargo install --profile release --path .
 
 
-FROM debian:stable-slim AS runtime
+FROM debian:11 AS runtime
 
 RUN apt update -y
 RUN apt install -y ca-certificates
