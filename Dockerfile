@@ -21,6 +21,7 @@ FROM debian:stable-slim AS runtime
 
 RUN apt update -y
 RUN apt install -y ca-certificates
+RUN apt install -y openssl
 RUN update-ca-certificates
 
 WORKDIR /usr/dist/bridelopp
