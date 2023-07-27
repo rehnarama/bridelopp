@@ -90,7 +90,7 @@ async fn oauth_callback(
 }
 
 pub async fn refresh_token(
-    db: Connection<JostridDatabase>,
+    db: &Connection<JostridDatabase>,
     config: &State<AppConfig>,
 ) -> Result<SpotifyUser, error::Error> {
     let url = "https://accounts.spotify.com/api/token".to_owned();

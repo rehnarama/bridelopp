@@ -6,6 +6,13 @@
 <style>
     main {
         padding: calc(2 * var(--unit));
+        --track-height: 70px;
+    }
+
+    @media screen and (max-width:801px) {
+        #content {
+            --track-height: 50px;
+        }
     }
 
     table {
@@ -15,6 +22,69 @@
     td,
     th {
         padding: var(--unit);
+    }
+
+    #music-controls {
+        display: flex;
+        gap: var(--unit);
+    }
+
+    .vote-container {
+        display: flex;
+        gap: calc(2 * var(--unit));
+        align-items: center;
+    }
+
+    .votes-text {
+        text-align: center;
+        line-height: 0.8;
+        width: var(--track-height);
+    }
+
+    .votes-inner-text {
+        font-size: 0.6em;
+    }
+
+    .track-container {
+        flex: 1;
+
+        display: grid;
+        grid-template-areas:
+            "art title vote"
+            "art artist vote";
+        grid-template-columns: var(--track-height) 1fr auto;
+        height: var(--track-height);
+        width: 100%;
+        margin-bottom: var(--unit);
+        gap: var(--unit);
+    }
+
+    .track-title {
+        grid-area: title;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        margin: 0;
+    }
+
+    .track-artist {
+        grid-area: artist;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        font-size: 0.75em;
+        margin: 0;
+    }
+
+    .track-album-art {
+        grid-area: art;
+        width: var(--track-height);
+        height: var(--track-height);
+    }
+
+    .track-delete {
+        grid-area: vote;
+        align-self: center;
     }
 </style>
 
@@ -27,6 +97,28 @@
             <p>
                 Välkommen, {{name}} ({{email}})
             </p>
+        </article>
+
+        <article>
+            <h2>Musik</h2>
+            <p>Kön är: {{#if queue_active}}På{{else}}Av{{/if}}</p>
+            <section id="music-controls">
+                <form action="/admin/queue" method="post">
+                    <input type="checkbox" style="display: none;" checked name="enabled" />
+                    <button type="submit">Starta kön</button>
+                </form>
+                <form action="/admin/queue" method="post">
+                    <input type="checkbox" style="display: none;" name="enabled" />
+                    <button type="submit">Pausa kön</button>
+                </form>
+            </section>
+
+            <h3>Låtar i kö</h3>
+            <details>
+                <summary>Öppna</summary>
+                <section id="queue">
+                </section>
+            </details>
         </article>
 
         <article>
@@ -62,7 +154,7 @@
                     <tr>
                         <td>
                             {{#each responses}}
-                                {{name}}{{#unless @last}},{{/unless}}
+                            {{name}}{{#unless @last}},{{/unless}}
                             {{/each}}
                             <br>
                             {{address}}
@@ -123,5 +215,80 @@
         </article>
     </main>
 </body>
+
+<script>
+    const voteUrl = "/vote";
+
+    async function deleteVote(track) {
+        await fetch("/admin" + voteUrl + "/" + track.uri, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        });
+    }
+
+    function buildTrackItem(track) {
+        const container = document.createElement("div");
+        const albumArt = document.createElement("img");
+        const title = document.createElement("p");
+        const artist = document.createElement("p");
+        const deleteButton = document.createElement("button");
+
+        title.innerHTML = track.name;
+        title.className = "track-title";
+        artist.innerHTML = track.artist;
+        artist.className = "track-artist";
+        deleteButton.innerHTML = "❌";
+        deleteButton.className = "track-delete";
+
+        albumArt.src = track.image;
+        albumArt.className = "track-album-art";
+
+        container.className = "track-container";
+        container.appendChild(albumArt);
+        container.appendChild(title);
+        container.appendChild(artist);
+        container.appendChild(deleteButton);
+
+        deleteButton.addEventListener("click", async () => {
+            await deleteVote(track);
+            await updateQueue();
+        });
+
+        const voteContainer = document.createElement("div");
+        voteContainer.className = "vote-container";
+
+        const votesP = document.createElement("p");
+        const votedTrack = track;
+        const votesPlural = votedTrack.votes === 1 ? "Röst" : "Röster";
+        votesP.innerHTML = `${votedTrack.votes}<br><span class="votes-inner-text">${votesPlural}</span>`;
+        votesP.className = "votes-text";
+
+        voteContainer.appendChild(votesP);
+        voteContainer.appendChild(container);
+
+        return voteContainer;
+    }
+
+    async function updateQueue() {
+        const response = await (await fetch(voteUrl)).json();
+
+        const queue = document.getElementById("queue");
+        queue.innerHTML = "";
+
+        response.sort((a, b) => b.votes - a.votes)
+            .map((track) => buildTrackItem(track))
+            .forEach(element => queue.appendChild(element));
+    }
+
+    function main() {
+        updateQueue();
+    }
+
+    main();
+
+</script>
+
 
 </html>

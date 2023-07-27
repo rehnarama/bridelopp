@@ -14,7 +14,7 @@ use rocket_db_pools::{
     Connection,
 };
 
-use crate::controllers::music_controller::VoteDto;
+use crate::{controllers::music_controller::VoteDto, error::Error};
 
 use super::JostridDatabase;
 
@@ -25,6 +25,8 @@ pub struct SpotifyUser {
     pub refresh_token: String,
     pub expires: DateTime,
     pub queue: Vec<QueueItem>,
+    pub next_track: Option<QueueItem>,
+    pub active: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -39,7 +41,13 @@ pub struct QueueItem {
 
 impl Into<Bson> for QueueItem {
     fn into(self) -> Bson {
-        todo!()
+        Bson::Document(doc! {
+            "uri": self.uri,
+            "name": self.name,
+            "artist": self.artist,
+            "image": self.image,
+            "votes": self.votes,
+        })
     }
 }
 
@@ -58,10 +66,10 @@ pub trait SpotifyDb {
         &self,
         uri: String,
     ) -> Result<Option<QueueItem>, rocket_db_pools::mongodb::error::Error>;
-    async fn add_vote(
-        &self,
-        vote: VoteDto,
-    ) -> Result<(), rocket_db_pools::mongodb::error::Error>;
+    async fn get_most_voted_queue_item(&self) -> Result<Option<QueueItem>, Error>;
+    async fn delete_queue_item(&self, uri: String) -> Result<(), Error>;
+    async fn set_next_track(&self, track: Option<QueueItem>) -> Result<(), Error>;
+    async fn add_vote(&self, vote: VoteDto) -> Result<(), rocket_db_pools::mongodb::error::Error>;
     async fn get_user(&self)
         -> Result<Option<SpotifyUser>, rocket_db_pools::mongodb::error::Error>;
     async fn insert_user(
@@ -87,9 +95,9 @@ impl SpotifyDb for Connection<JostridDatabase> {
         let mut cursor = get_collection(self)
             .aggregate(
                 [
+                    doc! { "$project": { "queue": true } },
                     doc! { "$unwind": "$queue" },
                     doc! { "$match": { "queue.uri": uri } },
-                    doc! { "$project": { "queue": true } },
                     doc! { "$replaceRoot": { "newRoot": "$queue" }},
                 ],
                 None,
@@ -102,10 +110,42 @@ impl SpotifyDb for Connection<JostridDatabase> {
             .map(|doc| from_document::<QueueItem>(doc).unwrap()))
     }
 
-    async fn add_vote(
-        &self,
-        vote: VoteDto,
-    ) -> Result<(), rocket_db_pools::mongodb::error::Error> {
+    async fn get_most_voted_queue_item(&self) -> Result<Option<QueueItem>, Error> {
+        let mut cursor = get_collection(self)
+            .aggregate(
+                [
+                    doc! { "$project": { "queue": true } },
+                    doc! { "$unwind": "$queue" },
+                    doc! { "$sort": { "queue.votes": -1 } },
+                    doc! { "$replaceRoot": { "newRoot": "$queue" }},
+                ],
+                None,
+            )
+            .await?;
+
+        Ok(cursor
+            .try_next()
+            .await?
+            .map(|doc| from_document::<QueueItem>(doc).unwrap()))
+    }
+
+    async fn delete_queue_item(&self, uri: String) -> Result<(), Error> {
+        get_collection(self)
+            .update_one(doc! {}, doc! { "$pull": {"queue": { "uri": uri }}}, None)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn set_next_track(&self, track: Option<QueueItem>) -> Result<(), Error> {
+        get_collection(self)
+            .update_one(doc! {}, doc! { "$set": { "next_track": track }}, None)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn add_vote(&self, vote: VoteDto) -> Result<(), rocket_db_pools::mongodb::error::Error> {
         match self.get_queue_item(vote.uri.to_owned()).await? {
             Some(vote) => {
                 get_collection(self)

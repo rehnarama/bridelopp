@@ -31,8 +31,17 @@ impl From<rocket_db_pools::mongodb::error::Error> for Error {
 impl From<Status> for Error {
     fn from(val: Status) -> Self {
         Error {
-            status: val,
-            msg: None,
+            status: val.clone(),
+            msg: Some(val.to_string()),
+        }
+    }
+}
+
+impl From<StatusCode> for Error {
+    fn from(val: StatusCode) -> Self {
+        Error {
+            status: Status::new(val.as_u16()),
+            msg: Some(val.to_string()),
         }
     }
 }

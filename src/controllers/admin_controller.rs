@@ -1,4 +1,8 @@
+use std::sync::atomic::Ordering;
+
+use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar, Status};
+use rocket::response::Redirect;
 use rocket::State;
 use rocket::{serde::Serialize, Route};
 use rocket_db_pools::mongodb::bson::doc;
@@ -6,12 +10,16 @@ use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 
 use crate::config::AppConfig;
+use crate::controllers::music_controller::MusicController;
 use crate::db::jostrid_database::invites::{self, Response};
+use crate::db::jostrid_database::spotify::{QueueItem, SpotifyDb, SpotifyUser};
 use crate::db::jostrid_database::JostridDatabase;
+use crate::error::Error;
 use crate::lib::azure_oauth::{self, MeResponse};
 use crate::lib::Controller;
 use crate::pkce;
-use crate::db::jostrid_database::spotify::{QueueItem, SpotifyUser, SpotifyDb};
+
+use super::music_controller;
 
 pub struct AdminController;
 
@@ -60,6 +68,7 @@ struct AdminContext {
     n_not_attending: usize,
     n_no_response: usize,
     n_total: usize,
+    queue_active: bool,
 }
 
 #[derive(Serialize)]
@@ -81,6 +90,7 @@ struct AzureContext {
 #[get("/", rank = 2)]
 async fn admin<'r>(
     client: Connection<JostridDatabase>,
+    music_controller: &State<MusicController>,
     config: &State<AppConfig>,
     cookies: &CookieJar<'_>,
 ) -> Result<Template, Status> {
@@ -88,21 +98,28 @@ async fn admin<'r>(
 
     match bearer_cookie {
         Some(bearer) => match azure_oauth::get_user(bearer.value().to_owned()).await {
-            Ok(user) => render_admin(&client, &user, bearer.value().to_string()).await,
+            Ok(user) => {
+                render_admin(&client, music_controller, &user, bearer.value().to_string()).await
+            }
             Err(_) => render_login(config, cookies),
         },
         None => render_login(config, cookies),
     }
 }
 
+#[delete("/vote/<uri>")]
+async fn vote(db: Connection<JostridDatabase>, uri: String) -> Result<(), Error> {
+    db.delete_queue_item(uri).await?;
+
+    Ok(())
+}
+
 async fn render_admin(
     client: &Connection<JostridDatabase>,
+    music_controller: &State<MusicController>,
     user: &MeResponse,
     bearer: String,
 ) -> Result<Template, Status> {
-    let spotify = client.get_user().await;
-    dbg!(spotify);
-
     let invites: Vec<Invite> = invites::get_invites(client)
         .await?
         .iter()
@@ -125,7 +142,7 @@ async fn render_admin(
         .iter()
         .filter(|r| !r.attending)
         .map(|_| 1)
-        .sum();;
+        .sum();
     let n_no_response = n_total - (n_attending + n_not_attending);
 
     Ok(Template::render(
@@ -139,6 +156,7 @@ async fn render_admin(
             n_not_attending,
             n_no_response,
             n_total,
+            queue_active: music_controller.queue_active.load(Ordering::Relaxed),
         },
     ))
 }
@@ -175,9 +193,37 @@ fn render_login(config: &State<AppConfig>, cookies: &CookieJar<'_>) -> Result<Te
     ))
 }
 
+#[derive(FromForm)]
+struct QueueData {
+    enabled: bool,
+}
+
+#[post("/queue", data = "<data>")]
+async fn activate_queue(
+    data: Form<QueueData>,
+    controller: &State<MusicController>,
+    cookies: &CookieJar<'_>,
+) -> Result<Redirect, Error> {
+    let bearer_cookie = cookies.get("bearer");
+
+    match bearer_cookie {
+        Some(bearer) => Ok::<(), Error>(
+            azure_oauth::get_user(bearer.value().to_owned())
+                .await
+                .and_then(|_| match data.enabled {
+                    true => Ok(controller.activate_queue()),
+                    false => Ok(controller.pause_queue()),
+                })?,
+        ),
+        None => Err(Status::Unauthorized.into()),
+    }?;
+
+    Ok(Redirect::to(uri!("/admin")))
+}
+
 impl Controller for AdminController {
     fn get_routes(&self) -> Vec<Route> {
-        routes![admin]
+        routes![admin, activate_queue, vote]
     }
 
     fn get_basepath(&self) -> &str {

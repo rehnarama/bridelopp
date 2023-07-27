@@ -1,9 +1,9 @@
 mod config;
 mod controllers;
 mod db;
+mod error;
 mod lib;
 mod pkce;
-mod error;
 
 #[macro_use]
 extern crate rocket;
@@ -12,7 +12,7 @@ extern crate dotenv;
 use controllers::template_controller::LoginContext;
 use db::jostrid_database::JostridDatabase;
 use dotenv::dotenv;
-use rocket::fairing::AdHoc;
+use rocket::{fairing::AdHoc, Config};
 
 use rocket_dyn_templates::Template;
 
@@ -35,13 +35,15 @@ fn unauthorized() -> Template {
 fn rocket() -> _ {
     dotenv().ok();
 
+    let config = Config::figment();
+
     let mut builder = rocket::build()
         .register("/", catchers![unauthorized])
         .attach(JostridDatabase::init())
         .attach(Template::fairing())
         .attach(AdHoc::config::<AppConfig>());
 
-    builder = controllers::mount(builder);
+    builder = controllers::mount(builder, config);
 
     builder
 }
