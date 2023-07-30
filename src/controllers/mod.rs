@@ -10,6 +10,7 @@ mod public_controller;
 mod registration_controller;
 mod spotify_oauth_controller;
 pub mod template_controller;
+mod image_controller;
 
 pub fn mount(mut builder: Rocket<Build>, config: Figment) -> Rocket<Build> {
     let public_controller = public_controller::PublicController {};
@@ -19,6 +20,7 @@ pub fn mount(mut builder: Rocket<Build>, config: Figment) -> Rocket<Build> {
     let email_controller = email_controller::IncomingEmailController {};
     let registration_controller = registration_controller::RegistrationController {};
     let spotify_controller = spotify_oauth_controller::SpotifyOauthController {};
+    let image_controller = image_controller::ImageController {};
 
     let address = config.find_value("address").unwrap();
     let port = config.find_value("port").unwrap();
@@ -36,6 +38,7 @@ pub fn mount(mut builder: Rocket<Build>, config: Figment) -> Rocket<Build> {
     builder = registration_controller.mount(builder, &config);
     builder = spotify_controller.mount(builder, &config);
     builder = music_controller.mount(builder, &config);
+    builder = image_controller.mount(builder, &config);
 
     builder = builder.manage(music_controller);
 

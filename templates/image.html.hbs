@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{>partials/head}}
+
+<style>
+    main {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: var(--unit);
+        align-items: center;
+    }
+
+    header {
+        justify-self: flex-start;
+    }
+
+    #content {
+        justify-self: center;
+        flex: 1;
+        display: flex;
+        align-items: stretch;
+        gap: calc(4 * var(--unit));
+        width: 100%;
+        padding: calc(2 * var(--unit)) var(--unit);
+        overflow-x: scroll;
+        height: 80vh;
+    }
+
+    .image-container {
+        flex-shrink: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        text-align: center;
+    }
+
+    .image {
+        object-fit: contain;
+        border-radius: calc(2 * var(--unit));
+        flex-shrink: 1;
+        flex: 1;
+        height: 94%;
+        max-width: calc(100vw - 2 * var(--unit));
+    }
+
+    #upload-container {
+        border: 4px dashed;
+        align-self: stretch;
+        border-radius: calc(2 * var(--unit));
+        border-color: var(--primary-color);
+        width: 400px;
+        max-width: 80vw;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: var(--unit);
+    }
+
+    #file-picker {
+        display: none;
+    }
+
+    #progress {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: var(--background-color);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+    }
+
+    #no-images {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: var(--background-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: calc(4 * var(--unit));
+        border-radius: calc(2 * var(--unit));
+    }
+</style>
+
+
+<body>
+    <main>
+        <header>
+            {{>partials/app_logo}}
+        </header>
+
+        <input type="file" accept="image/*" id="file-picker" multiple />
+        <article id="content">
+            <div id="upload-container">
+                <p>Tryck för att ladda upp en bild.</p>
+            </div>
+            {{#each images}}
+            <div class="image-container">
+                <img src="{{this.url}}" class="image" alt="{{this.created}}" loading="lazy" />
+                <p>{{this.created}}</p>
+            </div>
+            {{else}}
+            <div class="image-container" id="no-images">
+                <p>Här kan du ladda upp bilder du tagit, som du kanske vill dela med oss!</p>
+            </div>
+            {{/each}}
+        </article>
+
+        <div id="progress">
+            <p id="progress-text">
+                Laddar upp 0/0 bilder
+            </p>
+        </div>
+    </main>
+</body>
+
+<script>
+    const filePicker = document.getElementById("file-picker");
+    const uploadContainer = document.getElementById("upload-container");
+    const progressText = document.getElementById("progress-text");
+    const progress = document.getElementById("progress");
+
+    filePicker.addEventListener("change", (e) => {
+        const files = e.currentTarget.files;
+
+        let count = 0;
+
+        progressText.innerHTML = `Laddar upp ${count}/${files.length} bilder.`;
+        progress.style.display = "flex";
+        for (const file of files) {
+            const reader = new FileReader();
+            reader.onload = async (load) => {
+                const arrayBuffer = load.target.result;
+                const response = await fetch("/image", {
+                    method: "PUT",
+                    body: arrayBuffer,
+                    headers: { "Content-Type": file.type }
+                });
+                count++;
+                progressText.innerHTML = `Laddar upp ${count}/${files.length} bilder.`;
+
+                if (count === files.length) {
+                    location.reload();
+                }
+            }
+
+            reader.readAsArrayBuffer(file);
+        }
+    });
+
+    uploadContainer.addEventListener("click", (e) => {
+        filePicker.click();
+    });
+
+
+</script>
+
+</html>
