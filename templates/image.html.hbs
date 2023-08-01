@@ -87,6 +87,9 @@
         text-align: center;
         padding: calc(4 * var(--unit));
         border-radius: calc(2 * var(--unit));
+        width: 600px;
+        flex-shrink: 0;
+        max-width: 90vw;
     }
 </style>
 
@@ -139,7 +142,7 @@
             const reader = new FileReader();
             reader.onload = async (load) => {
                 const arrayBuffer = load.target.result;
-                const response = await fetch("/image", {
+                const response = await fetch("/photo", {
                     method: "PUT",
                     body: arrayBuffer,
                     headers: { "Content-Type": file.type }
