@@ -112,6 +112,6 @@ impl Controller for ImageController {
     }
 
     fn get_basepath(&self) -> &str {
-        "/image"
+        "/photo"
     }
 }
