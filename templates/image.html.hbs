@@ -25,7 +25,6 @@
         width: 100%;
         padding: calc(2 * var(--unit)) var(--unit);
         overflow-x: scroll;
-        height: 80vh;
     }
 
     .image-container {
@@ -54,10 +53,12 @@
         max-width: 80vw;
         flex-shrink: 0;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
         padding: var(--unit);
+        gap: calc(3 * var(--unit));
     }
 
     #file-picker {
@@ -68,6 +69,7 @@
         background-color: rgba(0, 0, 0, 0.8);
         color: var(--background-color);
         display: none;
+        gap: var(--unit);
         align-items: center;
         justify-content: center;
         text-align: center;
@@ -76,6 +78,7 @@
         right: 0;
         top: 0;
         bottom: 0;
+        fill: white;
     }
 
     #no-images {
@@ -103,7 +106,8 @@
         <input type="file" accept="image/*" id="file-picker" multiple />
         <article id="content">
             <div id="upload-container">
-                <p>Tryck för att ladda upp en bild.</p>
+                <p>Här kan du ladda upp bilder du tagit, som du kanske vill dela med oss!</p>
+                <p>Tryck här för att ladda upp en bild.</p>
             </div>
             {{#each images}}
             <div class="image-container">
@@ -112,15 +116,16 @@
             </div>
             {{else}}
             <div class="image-container" id="no-images">
-                <p>Här kan du ladda upp bilder du tagit, som du kanske vill dela med oss!</p>
+                Ingen har laddat upp någon bild ännu!
             </div>
             {{/each}}
         </article>
 
         <div id="progress">
             <p id="progress-text">
-                Laddar upp 0/0 bilder
+                Laddar upp 0/0 bilder...
             </p>
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"><animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12" repeatCount="indefinite"/></path></svg>
         </div>
     </main>
 </body>
@@ -136,7 +141,7 @@
 
         let count = 0;
 
-        progressText.innerHTML = `Laddar upp ${count}/${files.length} bilder.`;
+        progressText.innerHTML = `Laddar upp ${count}/${files.length} bilder...`;
         progress.style.display = "flex";
         for (const file of files) {
             const reader = new FileReader();
