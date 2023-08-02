@@ -1,3 +1,4 @@
+use image::io::Reader as ImageReader;
 use md5;
 use reqwest::{header::HeaderMap, Body};
 use rocket::data::{Data, ToByteUnit};
@@ -11,6 +12,7 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
+use std::io::Cursor;
 use time::macros::format_description;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -39,6 +41,9 @@ struct ImageContext {
 pub struct Image {
     pub url: String,
     pub created: String,
+    pub width: u32,
+    pub height: u32,
+    pub portrait: bool,
 }
 
 impl From<images::Image> for Image {
@@ -46,12 +51,23 @@ impl From<images::Image> for Image {
         Image {
             url: value.url,
             created: OffsetDateTime::from(value.created.to_system_time())
-                .format(format_description!(
-                    "[year]-[month]-[day] [hour]:[minute]"
-                ))
+                .format(format_description!("[year]-[month]-[day] [hour]:[minute]"))
                 .unwrap(),
+            width: value.width,
+            height: value.height,
+            portrait: value.width < value.height,
         }
     }
+}
+
+#[delete("/<url>")]
+async fn delete(
+    url: String,
+    db: Connection<JostridDatabase>,
+) -> Result<(), Error> {
+    db.remove_image(url).await?;
+    
+    Ok(())
 }
 
 #[put("/", data = "<file>", format = "image/*")]
@@ -69,6 +85,9 @@ async fn upload(
         .await
         .unwrap()
         .into_inner();
+    let img = ImageReader::new(Cursor::new(&bytes))
+        .with_guessed_format()?
+        .decode()?;
     let filename = format!(
         "{:x}.{}",
         md5::compute(&bytes),
@@ -89,7 +108,7 @@ async fn upload(
         .await
         .unwrap();
 
-    db.add_image(url).await?;
+    db.add_image(url, img.width(), img.height()).await?;
 
     Ok(())
 }
@@ -108,7 +127,7 @@ async fn render(db: Connection<JostridDatabase>) -> Result<Template, Error> {
 
 impl Controller for ImageController {
     fn get_routes(&self) -> Vec<Route> {
-        routes![render, upload]
+        routes![render, upload, delete]
     }
 
     fn get_basepath(&self) -> &str {

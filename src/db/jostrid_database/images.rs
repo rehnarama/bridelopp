@@ -19,6 +19,8 @@ use super::JostridDatabase;
 pub struct Image {
     pub url: String,
     pub created: DateTime,
+    pub width: u32,
+    pub height: u32,
 }
 
 fn get_collection(
@@ -29,18 +31,34 @@ fn get_collection(
 
 #[async_trait]
 pub trait ImagesDb {
-    async fn add_image(&self, url: String) -> Result<(), Error>;
+    async fn remove_image(&self, url: String) -> Result<(), Error>;
+    async fn add_image(&self, url: String, width: u32, height: u32) -> Result<(), Error>;
     async fn get_images(&self) -> Result<Vec<Image>, Error>;
 }
 
 #[async_trait]
 impl ImagesDb for Connection<JostridDatabase> {
-    async fn add_image(&self, url: String) -> Result<(), Error> {
+    async fn remove_image(&self, url: String) -> Result<(), Error> {
+        get_collection(self)
+            .delete_one(
+                doc! {
+                    "url": url
+                },
+                None,
+            )
+            .await?;
+
+        Ok(())
+    }
+
+    async fn add_image(&self, url: String, width: u32, height: u32) -> Result<(), Error> {
         get_collection(self)
             .insert_one(
                 Image {
                     url,
                     created: DateTime::now(),
+                    width,
+                    height,
                 },
                 None,
             )

@@ -1,5 +1,6 @@
 use std::backtrace::Backtrace;
 
+use image::ImageError;
 use reqwest::StatusCode;
 use rocket::{http::Status, response::Responder, Response};
 
@@ -42,6 +43,24 @@ impl From<StatusCode> for Error {
         Error {
             status: Status::new(val.as_u16()),
             msg: Some(val.to_string()),
+        }
+    }
+}
+
+impl From<ImageError> for Error {
+    fn from(value: ImageError) -> Self {
+        Error {
+            status: Status::InternalServerError,
+            msg: Some(value.to_string())
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Error {
+            status: Status::InternalServerError,
+            msg: Some(value.to_string())
         }
     }
 }

@@ -7,7 +7,6 @@
     main {
         display: flex;
         flex-direction: column;
-        height: 100%;
         padding: var(--unit);
         align-items: center;
     }
@@ -18,33 +17,63 @@
 
     #content {
         justify-self: center;
-        flex: 1;
         display: flex;
         align-items: stretch;
         gap: calc(4 * var(--unit));
         width: 100%;
         padding: calc(2 * var(--unit)) var(--unit);
         overflow-x: scroll;
+        height: 100vh;
+        flex-shrink: 0;
     }
 
     .image-container {
-        flex-shrink: 1;
+        text-align: center;
         display: flex;
         flex-direction: column;
-        height: 100%;
-        text-align: center;
+        width: 90vw;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    @media (orientation: landscape) {
+        .image-container.portrait {
+            width: 30vw;
+        }
+    }
+
+    .image-label {
+        position: absolute;
+        display: block;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+        color: white;
+        margin: 0;
+        border-radius: 0 0 calc(2 * var(--unit)) calc(2 * var(--unit));
     }
 
     .image {
-        object-fit: contain;
         border-radius: calc(2 * var(--unit));
-        flex-shrink: 1;
-        flex: 1;
-        height: 94%;
-        max-width: calc(100vw - 2 * var(--unit));
+        box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.5);
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+    }
+
+    .image:fullscreen {
+        object-fit: contain;
+    }
+
+    .image-link {
+        height: 100%;
+        width: 100%;
     }
 
     #upload-container {
+        grid-row: 1 / 2;
         border: 4px dashed;
         align-self: stretch;
         border-radius: calc(2 * var(--unit));
@@ -110,9 +139,12 @@
                 <p>Tryck här för att ladda upp en bild.</p>
             </div>
             {{#each images}}
-            <div class="image-container">
-                <img src="{{this.url}}" class="image" alt="{{this.created}}" loading="lazy" />
-                <p>{{this.created}}</p>
+            <div class="image-container {{#if this.portrait}}portrait{{/if}}">
+                <a href="{{this.url}}" class="image-link" target="_blank" onclick="onImageClick">
+                    <img width="{{this.width}}" height="{{this.height}}" src="{{this.url}}" class="image"
+                        alt="{{this.created}}" />
+                </a>
+                <p class="image-label">{{this.created}}</p>
             </div>
             {{else}}
             <div class="image-container" id="no-images">
@@ -125,7 +157,14 @@
             <p id="progress-text">
                 Laddar upp 0/0 bilder...
             </p>
-            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"><animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12" repeatCount="indefinite"/></path></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
+                <path
+                    d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z">
+                    <animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12"
+                        repeatCount="indefinite" />
+                </path>
+            </svg>
         </div>
     </main>
 </body>
@@ -167,6 +206,22 @@
     uploadContainer.addEventListener("click", (e) => {
         filePicker.click();
     });
+
+    function onImageClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (document.fullscreenElement === null) {
+            e.currentTarget.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+        return false;
+    }
+
+    document.querySelectorAll(".image").forEach(img => {
+        img.addEventListener("click", onImageClick);
+    })
 
 
 </script>
