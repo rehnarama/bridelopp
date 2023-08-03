@@ -2,6 +2,7 @@ use image::io::Reader as ImageReader;
 use md5;
 use reqwest::{header::HeaderMap, Body};
 use rocket::data::{Data, ToByteUnit};
+use rocket::http::private::cookie::Expiration;
 use rocket::http::ContentType;
 use rocket::Request;
 use rocket::{
@@ -14,7 +15,7 @@ use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 use std::io::Cursor;
 use time::macros::format_description;
-use time::OffsetDateTime;
+use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
 extern crate base64;
@@ -47,7 +48,7 @@ pub struct Image {
     pub width: u32,
     pub height: u32,
     pub portrait: bool,
-    pub owned: bool
+    pub owned: bool,
 }
 
 impl Image {
@@ -63,7 +64,6 @@ impl Image {
             owned: value.session_id == session_id,
         }
     }
-
 }
 
 #[delete("/<url>")]
@@ -152,6 +152,9 @@ fn get_session_id(cookies: &CookieJar<'_>) -> String {
         None => {
             let cookie = Cookie::build(SESSION_COOKIE, Uuid::new_v4().to_string())
                 .same_site(rocket::http::SameSite::Lax)
+                .expires(Expiration::DateTime(
+                    OffsetDateTime::now_utc() + Duration::days(30),
+                ))
                 .finish();
 
             let id = cookie.value().to_owned();
