@@ -97,6 +97,8 @@
         text-align: center;
         padding: var(--unit);
         gap: calc(3 * var(--unit));
+
+        scroll-snap-align: start;
     }
 
     #file-picker {
@@ -160,7 +162,7 @@
             </div>
             {{#each images}}
             <div class="image-container {{#if this.portrait}}portrait{{/if}}">
-                <a href="{{this.url}}" class="image-link" target="_blank" onclick="onImageClick">
+                <a href="{{this.url}}" class="image-link" target="_blank">
                     <img width="{{this.width}}" height="{{this.height}}" src="{{this.url}}" class="image"
                         alt="{{this.created}}" />
                 </a>
@@ -229,12 +231,17 @@
         filePicker.click();
     });
 
-    function onImageClick(e) {
+    async function onImageClick(e) {
         e.preventDefault();
         e.stopPropagation();
 
         if (document.fullscreenElement === null) {
-            e.currentTarget.requestFullscreen();
+            const currentTarget = e.currentTarget;
+            try {
+                await currentTarget.requestFullscreen();
+            } catch (e) {
+                window.open(currentTarget.src, "_blank");
+            }
         } else {
             document.exitFullscreen();
         }
