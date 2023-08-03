@@ -11,8 +11,13 @@
         align-items: center;
     }
 
+    html {
+        scroll-snap-type: y mandatory;
+    }
+
     header {
         justify-self: flex-start;
+        scroll-snap-align: start;
     }
 
     #content {
@@ -25,6 +30,9 @@
         overflow-x: scroll;
         height: 100vh;
         flex-shrink: 0;
+
+        scroll-snap-type: x mandatory;
+        scroll-snap-align: end;
     }
 
     .image-container {
@@ -38,7 +46,7 @@
 
     @media (orientation: landscape) {
         .image-container.portrait {
-            width: 30vw;
+            width: 50vw;
         }
     }
 
@@ -60,6 +68,8 @@
         height: 100%;
         width: 100%;
         object-fit: cover;
+
+        scroll-snap-align: center;
     }
 
     .image:fullscreen {
