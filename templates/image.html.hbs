@@ -49,7 +49,6 @@
         bottom: 0;
         right: 0;
         background-color: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(10px);
         color: white;
         margin: 0;
         border-radius: 0 0 calc(2 * var(--unit)) calc(2 * var(--unit));
@@ -123,6 +122,17 @@
         flex-shrink: 0;
         max-width: 90vw;
     }
+
+    .remove-button {
+        position: absolute;
+        right: 0;
+        top: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        padding: var(--unit);
+        border-radius: 0 calc(2 * var(--unit)) 0 calc(2 * var(--unit));
+        cursor: pointer;
+        user-select: none;
+    }
 </style>
 
 
@@ -145,6 +155,8 @@
                         alt="{{this.created}}" />
                 </a>
                 <p class="image-label">{{this.created}}</p>
+                <div class="remove-button" {{#unless this.owned}}style="display: none" {{/unless}}
+                    data-url="{{this.url}}">❌</div>
             </div>
             {{else}}
             <div class="image-container" id="no-images">
@@ -219,9 +231,30 @@
         return false;
     }
 
+    async function removeImage(url) {
+        progressText.innerHTML = "Tar bort bild...";
+        progress.style.display = "flex";
+        await fetch(`/photo/${encodeURIComponent(url)}`, {
+            method: "DELETE",
+        });
+    }
+
     document.querySelectorAll(".image").forEach(img => {
         img.addEventListener("click", onImageClick);
-    })
+    });
+
+
+    document.querySelectorAll(".remove-button").forEach(btn => {
+        btn.addEventListener("click", async () => {
+
+            if (confirm("Är du säker på att du vill ta bort bilden?")) {
+                const url = btn.attributes["data-url"].value;
+                await removeImage(url);
+                location.reload();
+            }
+        });
+    });
+
 
 
 </script>

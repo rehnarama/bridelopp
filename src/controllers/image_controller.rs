@@ -28,12 +28,15 @@ use crate::{
     pkce,
 };
 
+const SESSION_COOKIE: &'static str = "session";
+
 pub struct ImageController;
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 struct ImageContext {
     images: Vec<Image>,
+    session_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -44,29 +47,35 @@ pub struct Image {
     pub width: u32,
     pub height: u32,
     pub portrait: bool,
+    pub owned: bool
 }
 
-impl From<images::Image> for Image {
-    fn from(value: images::Image) -> Self {
+impl Image {
+    fn from_dao(value: &images::Image, session_id: &str) -> Self {
         Image {
-            url: value.url,
+            url: value.url.clone(),
             created: OffsetDateTime::from(value.created.to_system_time())
                 .format(format_description!("[year]-[month]-[day] [hour]:[minute]"))
                 .unwrap(),
             width: value.width,
             height: value.height,
             portrait: value.width < value.height,
+            owned: value.session_id == session_id,
         }
     }
+
 }
 
 #[delete("/<url>")]
 async fn delete(
     url: String,
     db: Connection<JostridDatabase>,
+    cookies: &CookieJar<'_>,
 ) -> Result<(), Error> {
-    db.remove_image(url).await?;
-    
+    let session_id = get_session_id(cookies);
+
+    db.remove_image(url, &session_id).await?;
+
     Ok(())
 }
 
@@ -76,7 +85,9 @@ async fn upload(
     config: &State<AppConfig>,
     file: Data<'_>,
     content_type: &ContentType,
+    cookies: &CookieJar<'_>,
 ) -> Result<(), Error> {
+    let session_id = get_session_id(cookies);
     let client = reqwest::Client::new();
 
     let bytes = file
@@ -108,21 +119,46 @@ async fn upload(
         .await
         .unwrap();
 
-    db.add_image(url, img.width(), img.height()).await?;
+    db.add_image(url, img.width(), img.height(), &session_id)
+        .await?;
 
     Ok(())
 }
 
 #[get("/")]
-async fn render(db: Connection<JostridDatabase>) -> Result<Template, Error> {
+async fn render(
+    db: Connection<JostridDatabase>,
+    cookies: &CookieJar<'_>,
+) -> Result<Template, Error> {
+    let session_id = get_session_id(cookies);
+
     let images = db
         .get_images()
         .await?
         .iter()
-        .map(|i| i.clone().into())
+        .map(|value| Image::from_dao(value, &session_id))
         .collect();
 
-    Ok(Template::render("image", ImageContext { images }))
+    Ok(Template::render(
+        "image",
+        ImageContext { images, session_id },
+    ))
+}
+
+fn get_session_id(cookies: &CookieJar<'_>) -> String {
+    match cookies.get(&SESSION_COOKIE) {
+        Some(cookie) => cookie.value().to_owned(),
+
+        None => {
+            let cookie = Cookie::build(SESSION_COOKIE, Uuid::new_v4().to_string())
+                .same_site(rocket::http::SameSite::Lax)
+                .finish();
+
+            let id = cookie.value().to_owned();
+            cookies.add(cookie);
+            id
+        }
+    }
 }
 
 impl Controller for ImageController {

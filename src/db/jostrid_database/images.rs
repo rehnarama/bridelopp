@@ -21,6 +21,7 @@ pub struct Image {
     pub created: DateTime,
     pub width: u32,
     pub height: u32,
+    pub session_id: String,
 }
 
 fn get_collection(
@@ -31,18 +32,25 @@ fn get_collection(
 
 #[async_trait]
 pub trait ImagesDb {
-    async fn remove_image(&self, url: String) -> Result<(), Error>;
-    async fn add_image(&self, url: String, width: u32, height: u32) -> Result<(), Error>;
+    async fn remove_image(&self, url: String, session_id: &str) -> Result<(), Error>;
+    async fn add_image(
+        &self,
+        url: String,
+        width: u32,
+        height: u32,
+        session_id: &str,
+    ) -> Result<(), Error>;
     async fn get_images(&self) -> Result<Vec<Image>, Error>;
 }
 
 #[async_trait]
 impl ImagesDb for Connection<JostridDatabase> {
-    async fn remove_image(&self, url: String) -> Result<(), Error> {
+    async fn remove_image(&self, url: String, session_id: &str) -> Result<(), Error> {
         get_collection(self)
             .delete_one(
                 doc! {
-                    "url": url
+                    "url": url,
+                    "session_id": session_id
                 },
                 None,
             )
@@ -51,7 +59,13 @@ impl ImagesDb for Connection<JostridDatabase> {
         Ok(())
     }
 
-    async fn add_image(&self, url: String, width: u32, height: u32) -> Result<(), Error> {
+    async fn add_image(
+        &self,
+        url: String,
+        width: u32,
+        height: u32,
+        session_id: &str,
+    ) -> Result<(), Error> {
         get_collection(self)
             .insert_one(
                 Image {
@@ -59,6 +73,7 @@ impl ImagesDb for Connection<JostridDatabase> {
                     created: DateTime::now(),
                     width,
                     height,
+                    session_id: session_id.to_owned(),
                 },
                 None,
             )
